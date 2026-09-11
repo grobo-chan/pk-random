@@ -3,6 +3,7 @@
 BIAS="false"
 PK_TOKEN=""
 
+# In bias mode: the headmate's who front less are more favoured
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help)
@@ -32,5 +33,16 @@ if [[ -z "$PK_TOKEN" || "$PK_TOKEN" == -* ]]; then
     read -r -p "Enter your PK Token: " PK_TOKEN
 fi
 
-echo "Bias Mode: $BIAS"
-echo "PK Token: $PK_TOKEN"
+MEMBERS="$(curl -s -H "Authorization: $PK_TOKEN" https://api.pluralkit.me/v2/systems/@me/members | jq 'map(select(.privacy.visibility == "public"))' )"
+COUNT=$(echo "$MEMBERS" | jq 'length')
+
+if [[ "$BIAS" == "true" ]]; then
+    # Get past 100 swicthes
+    SWITCHES="$(curl -s -H "Authorization: $PK_TOKEN" https://api.pluralkit.me/v2/systems/@me/switches | jq .)"
+    echo "$SWITCHES"
+else
+    # Pick a random member
+    rand_idx=$(( RANDOM % COUNT ))
+    HEADMATE=$(echo "$MEMBERS" | jq --argjson idx "$rand_idx" '.[$idx].display_name')
+    echo "The headmate selected is: $HEADMATE"
+fi
