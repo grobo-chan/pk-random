@@ -80,12 +80,18 @@ if [[ "$BIAS" == "true" ]]; then
         for k in "${!MEMBER_TIMES[@]}"; do
             echo "$k ${MEMBER_TIMES[$k]}"
         done | awk '
+            BEGIN {
+                srand(); # Re-seed the randomizer
+            }
             {
+                # This block runs for every row printed in the for loop
+                # We are making a keys array with the values in the first column
+                # And a values array with the values in the second column
                 keys[NR] = $1;
                 vals[NR] = $2;
             }
             END {
-                n = NR;
+                n = NR; # This runs after all lines are read, so this is the total number of rows
                 if (n == 0) exit;
 
                 # So, for our weighted random, the weights are determined by 1-PERCENTILE
@@ -100,7 +106,6 @@ if [[ "$BIAS" == "true" ]]; then
                 }
 
                 range = max_v - min_v;
-                srand();
                 total_weight = 0;
 
                 # Calculate the weights (1 - PERCENTILE)
@@ -114,17 +119,19 @@ if [[ "$BIAS" == "true" ]]; then
                 }
 
                 # Let the randomizer do its thing
+                # rand() is between 0 & 1 (exclusive)
+                # So, r is just a random number between 0 & our total_weight (exclusive)
                 r = rand() * total_weight;
                 sum = 0;
                 for (i = 1; i <= n; i++) {
                     sum += weights[i];
-                    if (r <= sum) {
+                    if (r <= sum) { # If r if bigger than previous sum of weights but less than current sum, we have our member
                         print keys[i]; # This is the Member ID in PK
                         exit;
                     }
                 }
 
-                print keys[n];
+                print keys[n]; # Just get the last one if nobody was printed
             }
         '
     )
