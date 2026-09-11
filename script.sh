@@ -41,6 +41,10 @@ fi
 MEMBERS="$(curl -s -H "Authorization: $PK_TOKEN" https://api.pluralkit.me/v2/systems/@me/members | jq 'map(select(.privacy.visibility == "public"))' )"
 COUNT=$(echo "$MEMBERS" | jq 'length')
 
+get_headmate_name() {
+    echo "$1" | jq '.display_name // .name'
+}
+
 if [[ "$BIAS" == "true" ]]; then
     declare -A MEMBER_TIMES
     # Get every member and set their front time to 0
@@ -72,7 +76,7 @@ if [[ "$BIAS" == "true" ]]; then
     done < <(echo "$DATA")
 
     # Scary ass awk script because awk lets us do weighted random
-    HEADMATE_ID=$(
+    ID=$(
         for k in "${!MEMBER_TIMES[@]}"; do
             echo "$k ${MEMBER_TIMES[$k]}"
         done | awk '
@@ -126,15 +130,15 @@ if [[ "$BIAS" == "true" ]]; then
     )
 
     # Filter the JSON by Member ID and get the Display Name
-    HEADMATE=$(echo "$MEMBERS" | jq --argjson id "$HEADMATE_ID" '.[] | select(.id == $id) | .display_name')
-    echo "The headmate selected is: $HEADMATE"
-    echo "Their PK ID is: $HEADMATE_ID"
-
+    HEADMATE=$(echo "$MEMBERS" | jq --argjson id "$ID" '.[] | select(.id == $id)')
+    NAME=$(get_headmate_name "$HEADMATE")
+    echo "The headmate selected is: $NAME"
+    echo "Their PK ID is: $ID"
 else
     # Pick a random member
     rand_idx=$(( RANDOM % COUNT ))
     HEADMATE=$(echo "$MEMBERS" | jq --argjson idx "$rand_idx" '.[$idx]')
-    NAME=$(echo "$HEADMATE" | jq .display_name)
+    NAME=$(get_headmate_name "$HEADMATE")
     ID=$(echo "$HEADMATE" | jq .id)
     echo "The headmate selected is: $NAME"
     echo "Their PK ID is: $ID"
