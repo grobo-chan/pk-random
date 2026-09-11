@@ -71,10 +71,6 @@ if [[ "$BIAS" == "true" ]]; then
         PREV_TIMESTAMP="$CURR_TIMESTAMP"
     done < <(echo "$DATA")
 
-    for k in "${!MEMBER_TIMES[@]}"; do
-        echo "$k ${MEMBER_TIMES[$k]}" >> "file.txt"
-    done
-
     # Scary ass awk script because awk lets us do weighted random
     HEADMATE_ID=$(
         for k in "${!MEMBER_TIMES[@]}"; do
@@ -132,10 +128,14 @@ if [[ "$BIAS" == "true" ]]; then
     # Filter the JSON by Member ID and get the Display Name
     HEADMATE=$(echo "$MEMBERS" | jq --argjson id "$HEADMATE_ID" '.[] | select(.id == $id) | .display_name')
     echo "The headmate selected is: $HEADMATE"
+    echo "Their PK ID is: $HEADMATE_ID"
 
 else
     # Pick a random member
     rand_idx=$(( RANDOM % COUNT ))
-    HEADMATE=$(echo "$MEMBERS" | jq --argjson idx "$rand_idx" '.[$idx].display_name')
-    echo "The headmate selected is: $HEADMATE"
+    HEADMATE=$(echo "$MEMBERS" | jq --argjson idx "$rand_idx" '.[$idx]')
+    NAME=$(echo "$HEADMATE" | jq .display_name)
+    ID=$(echo "$HEADMATE" | jq .id)
+    echo "The headmate selected is: $NAME"
+    echo "Their PK ID is: $ID"
 fi
