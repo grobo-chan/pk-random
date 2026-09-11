@@ -3,11 +3,16 @@
 BIAS="false"
 PK_TOKEN=""
 
-# In bias mode: the headmate's who front less are more favoured
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help)
+            echo "Tiny script to pick a random headmate from PluralKit"
             echo "Usage: $0 [-b|--bias] [-t|--token TOKEN]"
+            echo
+            echo "In bias mode the headmate's who front less are more likely to be picked."
+            echo "This program will require your PK Token. These are used to send requests to the PK API to fetch members and front history."
+            echo "The token is NOT being sent anywhere else and is only used for the purpose of data fetching."
+            echo "If token is not supplied via --token, the program will ask for one."
             exit 0
             ;;
         -b|--bias)
