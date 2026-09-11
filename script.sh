@@ -38,8 +38,27 @@ COUNT=$(echo "$MEMBERS" | jq 'length')
 
 if [[ "$BIAS" == "true" ]]; then
     # Get past 100 swicthes
-    SWITCHES="$(curl -s -H "Authorization: $PK_TOKEN" https://api.pluralkit.me/v2/systems/@me/switches | jq .)"
-    echo "$SWITCHES"
+    DATA="$(curl -s -H "Authorization: $PK_TOKEN" https://api.pluralkit.me/v2/systems/@me/switches | jq -c .[])"
+    PREV_TIMESTAMP=$(date +%s)
+    echo "$DATA" | while read i; do
+        # jq doesn't support microseconds so we cut them out with crazy ass regex
+        # We also need to convert the timestamp from ISO-8601 to Unix Timestamps
+        CURR_TIMESTAMP=$(echo "$i" | jq '.timestamp | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601')
+
+        # Calculate front time
+        # For first member of array (fronter) is TIME_NOW - TIMESTAMP_IN_JSON
+        # For rest it is PREV_TIMESTAMP - CURR_TIMESTAMP
+        DELTA=$((PREV_TIMESTAMP - CURR_TIMESTAMP))
+        days=$(( DELTA / 86400 ))
+        hours=$(( (DELTA % 86400) / 3600 ))
+        minutes=$(( (DELTA % 3600) / 60 ))
+        seconds=$(( DELTA % 60 ))
+
+        echo "Front time for members $(echo "$i" | jq -c .members) is ${days}d ${hours}h ${minutes}m ${seconds}s"
+
+        # Set the PREV_TIMESTAMP for next iteration
+        PREV_TIMESTAMP="$CURR_TIMESTAMP"
+    done
 else
     # Pick a random member
     rand_idx=$(( RANDOM % COUNT ))
